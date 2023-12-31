@@ -81,7 +81,7 @@ const FormAndData = () => {
   };
 
   return (
-    <div className='flex flex-col justify-center align-middle'>
+    <div className='flex flex-col items-center justify-center align-middle'>
       <form className='my-4' onSubmit={handleSubmit} action='GET'>
         <span>
           <label htmlFor='username'>Enter username here:</label>
@@ -89,14 +89,15 @@ const FormAndData = () => {
             type='text'
             name='username'
             id='username'
-            className='ml-3 max-w-5xl rounded-sm border-2 bg-slate-200 text-slate-700 focus:border-cyan-500'
+            placeholder='AniList username'
+            className='border-1 ml-3 mt-2 max-w-5xl rounded-md bg-slate-200 px-2 py-1 text-slate-700 focus:border-cyan-500'
             onChange={handleUsernamechange}
             value={username}
           />
         </span>
         <input
           type='submit'
-          className='transition-all hover:bg-slate-200'
+          className='ml-4 rounded-md bg-slate-300 px-3 py-1 transition-all hover:bg-slate-200'
           value={'Submit'}
         />
       </form>
@@ -107,17 +108,25 @@ const FormAndData = () => {
           <p></p>
         )}
       </div>
-      <div className='flex flex-wrap'>
-        {animeList.map(
-          (anime) =>
-            anime.coverImage && (
-              <img
-                className='m-4 h-64 w-64 object-cover'
-                key={anime.id}
-                src={anime.coverImage.extraLarge}
-                alt={`Thumbnail for anime ${anime.title.english}`}
-              />
-            ),
+      <div className='grid grid-cols-3 gap-1 sm:gap-2'>
+        {animeList.map((anime, index) =>
+          anime.title ? (
+            <img
+              className='h-24 w-24 object-cover sm:h-40 sm:w-40 md:h-64 md:w-64'
+              key={anime.id}
+              src={anime.coverImage.extraLarge}
+              alt={`Thumbnail for ${anime.title.english}`}
+            />
+          ) : (
+            <div
+              key={index}
+              className='flex h-24 w-24 items-center justify-center bg-slate-200 object-cover sm:h-40 sm:w-40 md:h-64 md:w-64'
+            >
+              <p className='text-slate-400' key={index}>
+                no anime
+              </p>
+            </div>
+          ),
         )}
       </div>
     </div>
