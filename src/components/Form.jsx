@@ -19,7 +19,7 @@ const FormAndData = () => {
     e.preventDefault();
     try {
       const animeData = await fetchAnimeData(username);
-      setAnimeList(animeData.data.User.favourites.anime.nodes.slice(0, 9));
+      setAnimeList(animeData.slice(0, 9));
       setError(false);
     } catch (error) {
       console.log(error);

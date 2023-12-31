@@ -33,7 +33,7 @@ const getAnimeData = async (username) => {
       }
     `;
 
-  return fetch(url, {
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -45,7 +45,14 @@ const getAnimeData = async (username) => {
         username: username,
       },
     }),
-  }).then((response) => response.json());
+  });
+
+  try {
+    const json = await response.json();
+    return json.data.User.favourites.anime.nodes;
+  } catch (error) {
+    console.Error(error);
+  }
 };
 
 export default getAnimeData;
