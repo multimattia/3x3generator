@@ -19,7 +19,7 @@ const FormAndData = () => {
     e.preventDefault();
     try {
       const animeData = await fetchAnimeData(username);
-      setAnimeList(animeData.slice(0, 9));
+      setAnimeList(animeData);
       setError(false);
     } catch (error) {
       console.log(error);
@@ -57,7 +57,7 @@ const FormAndData = () => {
         {error ? <p className='text-red-500'>Username does not exist</p> : null}
       </div>
       <div className='grid grid-cols-3 gap-1 sm:gap-2'>
-        {animeList.map((anime, index) =>
+        {animeList.slice(0, 9).map((anime, index) =>
           anime.title ? (
             <img
               className='h-24 w-24 object-cover sm:h-40 sm:w-40 md:h-64 md:w-64'
