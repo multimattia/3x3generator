@@ -1,4 +1,4 @@
-const getAnimeData = async (username) => {
+export const getAnimeData = async (username) => {
   const url = 'https://graphql.anilist.co';
   const query = `
       query ($username: String) {
@@ -55,4 +55,38 @@ const getAnimeData = async (username) => {
   }
 };
 
-export default getAnimeData;
+export const getUserNames = async (username) => {
+  const url = 'https://graphql.anilist.co';
+  const query = `
+    query ($search: String) {
+      users: Page(perPage: 8) {
+        pageInfo {
+          total
+        }
+        results: users(search: $search) {
+          id
+          name
+        }
+      }
+    }
+    `;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({
+      query,
+      variables: {
+        search: username,
+      },
+    }),
+  });
+  try {
+    const json = await response.json();
+    return json.data.users.results;
+  } catch (error) {
+    console.log(error);
+  }
+};

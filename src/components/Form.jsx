@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import fetchAnimeData from '../api/anilistFetcher.js';
+import { getAnimeData, getUserNames } from '../api/anilistFetcher.js';
+import { useDebounce } from '../hooks/useDebounce.js';
 
 const FormAndData = () => {
   const [username, setUsername] = useState('');
+  const debouncedUsername = useDebounce(username, 500);
   const [error, setError] = useState(false);
 
   const [draggedItem, setDraggedItem] = useState(null);
   const [dropPosition, setDropPosition] = useState(-1);
+  const [autoCompleteResults, setAutocompleteResults] = useState([]);
 
   const [animeList, setAnimeList] = useState(
     Array.from({ length: 9 }, (_, i) => ({
@@ -29,6 +32,15 @@ const FormAndData = () => {
     }
   }, [draggedItem, dropPosition]);
 
+  useEffect(() => {
+    if (debouncedUsername) {
+      getUserNames(debouncedUsername).then(setAutocompleteResults);
+      console.log(`${debouncedUsername}`);
+    } else {
+      setAutocompleteResults([]);
+    }
+  }, [debouncedUsername]);
+
   const handleUsernamechange = (e) => {
     setUsername(e.target.value);
   };
@@ -36,13 +48,31 @@ const FormAndData = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const fetchedData = await fetchAnimeData(username);
+      const fetchedData = await getAnimeData(username);
+      console.log(await getUserNames(username));
       const animeData = Array.from(
         { length: 9 },
         (_, i) => fetchedData[i] || { id: `placeholder-${i}`, title: null },
       );
       setAnimeList(animeData);
       setError(false);
+    } catch (error) {
+      setError(true);
+    }
+  };
+
+  const submitUsername = async (username) => {
+    setUsername(username);
+    try {
+      const fetchedData = await getAnimeData(username);
+      console.log(await getUserNames(username));
+      const animeData = Array.from(
+        { length: 9 },
+        (_, i) => fetchedData[i] || { id: `placeholder-${i}`, title: null },
+      );
+      setAnimeList(animeData);
+      setError(false);
+      setAutocompleteResults([]);
     } catch (error) {
       setError(true);
     }
@@ -76,10 +106,16 @@ const FormAndData = () => {
             id='username'
             autoComplete='off'
             placeholder='AniList username'
+            list='usernames'
             className='border-1 ml-3 mt-2 max-w-5xl rounded-md bg-slate-200 px-2 py-1 text-slate-700 focus:border-cyan-500'
             onChange={handleUsernamechange}
             value={username}
           />
+          <datalist id='usernames'>
+            {autoCompleteResults.map((username) => (
+              <option key={username.id} value={username.name}></option>
+            ))}
+          </datalist>
         </span>
         <input
           type='submit'
@@ -87,6 +123,7 @@ const FormAndData = () => {
           value={'Submit'}
         />
       </form>
+      <ul></ul>
       <div>
         {error ? <p className='text-red-500'>Username does not exist</p> : null}
       </div>
@@ -94,7 +131,6 @@ const FormAndData = () => {
         className='grid grid-cols-3 gap-1 sm:gap-2'
         onDragOver={(e) => e.preventDefault()}
       >
-        {/* {animeList.slice(0, 9).map((anime, index) => */}
         {animeList.map((anime, index) =>
           anime.title ? (
             <div
