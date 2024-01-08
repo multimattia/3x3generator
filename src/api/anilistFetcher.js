@@ -51,7 +51,7 @@ const getAnimeData = async (username) => {
     const json = await response.json();
     return json.data.User.favourites.anime.nodes;
   } catch (error) {
-    console.Error(error);
+    console.log(error);
   }
 };
 

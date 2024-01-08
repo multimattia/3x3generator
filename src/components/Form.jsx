@@ -1,15 +1,33 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import fetchAnimeData from '../api/anilistFetcher.js';
 
 const FormAndData = () => {
   const [username, setUsername] = useState('');
   const [error, setError] = useState(false);
+
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [dropPosition, setDropPosition] = useState(-1);
+
   const [animeList, setAnimeList] = useState(
     Array.from({ length: 9 }, (_, i) => ({
       id: `placeholder-${i}` + 1,
       name: null,
     })),
   );
+
+  useEffect(() => {
+    if (draggedItem !== null && dropPosition !== -1) {
+      setAnimeList((prevState) => {
+        let data = [...prevState];
+        const temp = data[dropPosition];
+        data[dropPosition] = data[draggedItem];
+        data[draggedItem] = temp;
+        return data;
+      });
+      setDraggedItem(null);
+      setDropPosition(-1);
+    }
+  }, [draggedItem, dropPosition]);
 
   const handleUsernamechange = (e) => {
     setUsername(e.target.value);
@@ -18,13 +36,28 @@ const FormAndData = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const animeData = await fetchAnimeData(username);
+      const fetchedData = await fetchAnimeData(username);
+      const animeData = Array.from(
+        { length: 9 },
+        (_, i) => fetchedData[i] || { id: `placeholder-${i}`, title: null },
+      );
       setAnimeList(animeData);
       setError(false);
     } catch (error) {
-      console.log(error);
       setError(true);
     }
+  };
+
+  const handleDragStart = (e, id) => {
+    e.preventDefault();
+    setTimeout(() => {
+      setDraggedItem(id);
+    }, 200);
+  };
+
+  const handleDrop = (e, index) => {
+    e.preventDefault();
+    setDropPosition(index);
   };
 
   return (
@@ -41,6 +74,7 @@ const FormAndData = () => {
             type='text'
             name='username'
             id='username'
+            autoComplete='off'
             placeholder='AniList username'
             className='border-1 ml-3 mt-2 max-w-5xl rounded-md bg-slate-200 px-2 py-1 text-slate-700 focus:border-cyan-500'
             onChange={handleUsernamechange}
@@ -56,15 +90,26 @@ const FormAndData = () => {
       <div>
         {error ? <p className='text-red-500'>Username does not exist</p> : null}
       </div>
-      <div className='grid grid-cols-3 gap-1 sm:gap-2'>
-        {animeList.slice(0, 9).map((anime, index) =>
+      <div
+        className='grid grid-cols-3 gap-1 sm:gap-2'
+        onDragOver={(e) => e.preventDefault()}
+      >
+        {/* {animeList.slice(0, 9).map((anime, index) => */}
+        {animeList.map((anime, index) =>
           anime.title ? (
-            <img
-              className='h-24 w-24 object-cover sm:h-40 sm:w-40 md:h-64 md:w-64'
+            <div
               key={anime.id}
-              src={anime.coverImage.extraLarge}
-              alt={`Thumbnail for ${anime.title.english}`}
-            />
+              className='image'
+              draggable='true'
+              onPointerDown={(e) => handleDragStart(e, index)}
+              onPointerUp={(e) => handleDrop(e, index)}
+            >
+              <img
+                className='h-24 w-24 object-cover sm:h-40 sm:w-40 md:h-64 md:w-64'
+                src={anime.coverImage.extraLarge}
+                alt={`Thumbnail for ${anime.title.english}`}
+              />
+            </div>
           ) : (
             <div
               key={anime.id}
