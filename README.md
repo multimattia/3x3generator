@@ -1,8 +1,6 @@
-# React + Vite
+# 3x3 grid generator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Made with React, TailwindCSS, html-to-image, and autoanimate. Deployed on
+Vercel.
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Don't look at the code too hard -- refactoring soon.
