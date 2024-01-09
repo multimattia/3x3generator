@@ -1,11 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getAnimeData, getUserNames } from '../api/anilistFetcher.js';
+import { toJpeg } from 'html-to-image';
 import { useDebounce } from '../hooks/useDebounce.js';
+import { useAutoAnimate } from '@formkit/auto-animate/react';
 
 const FormAndData = () => {
   const [username, setUsername] = useState('');
-  const debouncedUsername = useDebounce(username, 500);
+  const debouncedUsername = useDebounce(username, 350);
   const [error, setError] = useState(false);
+  const ref = useRef(null);
+  const [parent, enableAnimations] = useAutoAnimate({ duration: 175 });
 
   const [draggedItem, setDraggedItem] = useState(null);
   const [dropPosition, setDropPosition] = useState(-1);
@@ -35,7 +39,6 @@ const FormAndData = () => {
   useEffect(() => {
     if (debouncedUsername) {
       getUserNames(debouncedUsername).then(setAutocompleteResults);
-      console.log(`${debouncedUsername}`);
     } else {
       setAutocompleteResults([]);
     }
@@ -49,30 +52,12 @@ const FormAndData = () => {
     e.preventDefault();
     try {
       const fetchedData = await getAnimeData(username);
-      console.log(await getUserNames(username));
       const animeData = Array.from(
         { length: 9 },
         (_, i) => fetchedData[i] || { id: `placeholder-${i}`, title: null },
       );
       setAnimeList(animeData);
       setError(false);
-    } catch (error) {
-      setError(true);
-    }
-  };
-
-  const submitUsername = async (username) => {
-    setUsername(username);
-    try {
-      const fetchedData = await getAnimeData(username);
-      console.log(await getUserNames(username));
-      const animeData = Array.from(
-        { length: 9 },
-        (_, i) => fetchedData[i] || { id: `placeholder-${i}`, title: null },
-      );
-      setAnimeList(animeData);
-      setError(false);
-      setAutocompleteResults([]);
     } catch (error) {
       setError(true);
     }
@@ -84,6 +69,23 @@ const FormAndData = () => {
       setDraggedItem(id);
     }, 200);
   };
+
+  const downloadGrid = useCallback(() => {
+    if (ref.current === null) {
+      return;
+    }
+
+    toJpeg(ref.current, { cacheBust: true })
+      .then((dataUrl) => {
+        const link = document.createElement('a');
+        link.download = `${username}'s-3x3`;
+        link.href = dataUrl;
+        link.click();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, [ref, username]);
 
   const handleDrop = (e, index) => {
     e.preventDefault();
@@ -119,7 +121,7 @@ const FormAndData = () => {
         </span>
         <input
           type='submit'
-          className='ml-4 rounded-md bg-slate-300 px-3 py-1 transition-all hover:bg-slate-200'
+          className='ml-4 rounded-md bg-slate-200 px-3 py-1 transition-all hover:bg-slate-300'
           value={'Submit'}
         />
       </form>
@@ -127,37 +129,47 @@ const FormAndData = () => {
       <div>
         {error ? <p className='text-red-500'>Username does not exist</p> : null}
       </div>
-      <div
-        className='grid grid-cols-3 gap-1 sm:gap-2'
-        onDragOver={(e) => e.preventDefault()}
-      >
-        {animeList.map((anime, index) =>
-          anime.title ? (
-            <div
-              key={anime.id}
-              className='image'
-              draggable='true'
-              onPointerDown={(e) => handleDragStart(e, index)}
-              onPointerUp={(e) => handleDrop(e, index)}
-            >
-              <img
-                className='h-24 w-24 object-cover sm:h-40 sm:w-40 md:h-64 md:w-64'
-                src={anime.coverImage.extraLarge}
-                alt={`Thumbnail for ${anime.title.english}`}
-              />
-            </div>
-          ) : (
-            <div
-              key={anime.id}
-              className='flex h-24 w-24 items-center justify-center bg-slate-200 object-cover sm:h-40 sm:w-40 md:h-64 md:w-64'
-            >
-              <p className='text-slate-400' key={index}>
-                no anime
-              </p>
-            </div>
-          ),
-        )}
+      <div ref={ref}>
+        <div
+          className='grid grid-cols-3 gap-1 bg-white p-2 sm:gap-2'
+          onDragOver={(e) => e.preventDefault()}
+          ref={parent}
+        >
+          {animeList.map((anime, index) =>
+            anime.title ? (
+              <div
+                key={anime.id}
+                className='image'
+                draggable='true'
+                onPointerDown={(e) => handleDragStart(e, index)}
+                onPointerUp={(e) => handleDrop(e, index)}
+              >
+                <img
+                  className='h-24 w-24 cursor-move object-cover sm:h-40 sm:w-40 md:h-64 md:w-64'
+                  src={anime.coverImage.extraLarge}
+                  alt={`Thumbnail for ${anime.title.english}`}
+                />
+              </div>
+            ) : (
+              <div
+                key={anime.id}
+                className='flex h-24 w-24 cursor-not-allowed select-none items-center justify-center bg-slate-200 object-cover sm:h-40 sm:w-40 md:h-64 md:w-64'
+              >
+                <p className='text-slate-400' key={index}>
+                  nothing
+                </p>
+              </div>
+            ),
+          )}
+        </div>
       </div>
+      <div className='p-5'></div>
+      <button
+        className='ml-4 rounded-md bg-slate-200 px-3 py-1 transition-all hover:bg-slate-300'
+        onClick={downloadGrid}
+      >
+        save
+      </button>
     </div>
   );
 };
